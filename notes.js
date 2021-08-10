@@ -11,11 +11,25 @@ class Note {
     this.creationTime = new Date()
     this.lastModified = this.creationTime
   }
-
+  static fromJSON(jsonString) {
+    let obj = JSON.parse(jsonString)
+    let note = new Note("", "")
+    note.id = obj.id
+    note.title = obj.title
+    note.contents = obj.contents
+    note.creationTime = obj.creationTime
+    note.lastModified = obj.lastModified
+    return note
+  }
   modify(title, contents) {
     this.title = title
     this.contents = contents
     this.lastModified = new Date()
+  }
+  toString() {
+    let res = "title: " + this.title + "\nCreation time: " + this.creationTime
+    res = res + "\nModification time: " + this.lastModified + "\n" + this.contents
+    return res
   }
 }
 
@@ -37,7 +51,7 @@ var db
 
 // program commands
 function helpCommand() {
-  console.log("Commands: \n" +
+  console.log("Commands:\n" +
     "new-\tCreate a Note\n" +
     "del-\tDelete a Note\n" +
     "mod-\tModify a Note\n" +
@@ -46,10 +60,28 @@ function helpCommand() {
     "exit-\tLeave the program.")
 }
 
+async function getNoteById(noteId) {
+  let idFound = false
+  for (let key of Object.keys(notes)) {
+    if (key == noteId) {
+      idFound = true
+      break
+    }
+  }
+  if (!idFound) {
+    throw "The note does not exists."
+  }
+
+  try {
+    return Note.fromJSON(await db.getEntry(noteId))
+  } catch (e) {
+    throw "Cannot get note:\n" + e
+  }
+}
+
 async function newCommand() {
   const noteTitle = readlinesync.question("title: ")
   const noteContents = readUntilFinish()
-
   let note = new Note(noteTitle, noteContents)
   notes[note.id] = note.title
   try {
@@ -85,7 +117,21 @@ async function printCommand(input) {
     console.log("Invalid note Id.")
     return
   }
+  let note = await getNoteById(noteId)
+  console.log(note.toString())
+}
 
+async function deleteCommand(input) {
+  let inArr = input.split(" ")
+  if (inArr.length < 2 && inArr[1] === undefined) {
+    console.log("Usage: del <Note Id>")
+    return
+  }
+  let noteId = inArr[1].trim()
+  if (noteId == "") {
+    console.log("Invalid note Id.")
+    return
+  }
   let idFound = false
   for (let key of Object.keys(notes)) {
     if (key == noteId) {
@@ -97,14 +143,35 @@ async function printCommand(input) {
     console.log("The note does not exists.")
     return
   }
+  await db.deleteEntry(noteId)
+}
+
+async function modifyCommand(input) {
+  let inArr = input.split(" ")
+  if (inArr.length < 2 && inArr[1] === undefined) {
+    console.log("Usage: mod <Note Id>")
+    return
+  }
+  let noteId = inArr[1].trim()
+  if (noteId == "") {
+    console.log("Invalid note Id.")
+    return
+  }
   try {
-    let note = JSON.parse(await db.getEntry(noteId))
-    console.log("Title: " + note.title)
-    console.log("Creation time: " + note.creationTime)
-    console.log("Last modified: " + note.lastModified)
-    console.log(note.contents)
+    let note = await getNoteById(noteId)
+    console.log(note.toString())
+    const noteTitle = readlinesync.question("title: ")
+    const noteContents = readUntilFinish()
+    note.modify(noteTitle, noteContents)
+    notes[note.id] = note.title
+    console.log("Saving note to the database... (1/2)")
+    await db.saveEntry(note.id, JSON.stringify(note))
+    console.log("Saving note list to the database... (2/2)")
+    await db.saveEntry("list", JSON.stringify(notes))
+    console.log("Done")
   } catch (e) {
-    console.error("Cannot get note:\n" + e)
+    console.error(e)
+    return
   }
 }
 
@@ -135,8 +202,12 @@ async function printCommand(input) {
       listCommand()
     } else if (cmd.startsWith("print")) {
       await printCommand(cmd)
+    } else if (cmd.startsWith("mod")) {
+      await modifyCommand(cmd)
+    } else if (cmd.startsWith("del")) {
+      await deleteCommand(cmd)
     } else if (cmd.startsWith("exit")) {
-      console.log("Goodybye.")
+      console.log("Goodbye !")
       exit = true
     } else {
       console.log("Command not found")
