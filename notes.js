@@ -1,7 +1,7 @@
 // import {PepinoDB} from "pepino.js"
 import {read} from "fs"
 import {v4 as uuidv4} from "uuid"
-import * as readline from "readline"
+import * as readlinesync from "readline-sync"
 
 class Note {
   constructor(title, contents) {
@@ -22,17 +22,18 @@ class Note {
 (async () => {
   try {
     //let db = new PepinoDB("http://localhost:50200", "notes-js", "caipiroska")
-    let notes = []
-    let exit = false
+  } catch (e) {
+    console.error(e)
+  }
 
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    })
+  let notes = []
+  let exit = false
 
-    console.log("Welcome to the Notes Program!\n" +
-      "TIP: type help for the command list.")
-    rl.question("Notes> ", (cmd) => {
+  console.log("Welcome to the Notes Program!\n" +
+    "TIP: type help for the command list.")
+  while (!exit) {
+    try {
+      const cmd = readlinesync.question("notes>")
       if (cmd.startsWith("help")) {
         console.log("Commands: \n" +
           "new-\tCreate a Note\n" +
@@ -41,10 +42,14 @@ class Note {
           "list-\tList Notes\n" +
           "print-\tPrint a Note to the screen\n" +
           "exit-\tLeave the program.")
+      } else if (cmd.startsWith("exit")) {
+        exit = true
+      } else {
+        console.log("Command not found")
       }
-    })
-  } catch (e) {
-    console.error(e)
+    } catch (e) {
+      console.error(e)
+    }
   }
 })()
 
