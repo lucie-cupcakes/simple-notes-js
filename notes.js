@@ -144,8 +144,12 @@ async function deleteCommand(input) {
     return
   }
   try {
+    console.log("Deleting note... (1/2)")
     await db.deleteEntry(noteId)
-    console.log("Note deleted")
+    delete notes[noteId]
+    console.log("Saving updated note list to the database... (2/2)")
+    await db.saveEntry("list", JSON.stringify(notes))
+    console.log("Done")
   } catch (e) {
     console.error(e)
   }
