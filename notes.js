@@ -143,7 +143,12 @@ async function deleteCommand(input) {
     console.log("The note does not exists.")
     return
   }
-  await db.deleteEntry(noteId)
+  try {
+    await db.deleteEntry(noteId)
+    console.log("Note deleted")
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 async function modifyCommand(input) {

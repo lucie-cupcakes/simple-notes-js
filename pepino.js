@@ -32,4 +32,14 @@ export class PepinoDB {
 			throw "pepino service error: HTTP error " + res.statusCode + " " + res.body
 		}
 	}
+
+	async deleteEntry(entryName) {
+		let url = this.#buildUrlForEntry(entryName)
+		const res = await got.delete(url)
+		if (res.statusCode == 200) {
+			return
+		} else {
+			throw "pepino service error: HTTP error " + res.statusCode + " " + res.body
+		}
+	}
 }
