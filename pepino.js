@@ -1,16 +1,20 @@
 import got from "got"
 
 export class PepinoDB {
+	#url
+	#dbName
+	#password
+
 	constructor(url, dbName, password) {
-		this.url = url
-		this.dbName = dbName
-		this.password = password
+		this.#url = url
+		this.#dbName = dbName
+		this.#password = password
 	}
 
 	#buildUrlForEntry(entryName) {
-		let params = "/?password=" + this.password + "&db=" + this.dbName
+		let params = "/?password=" + this.#password + "&db=" + this.#dbName
 		params += "&entry=" + entryName
-		return new URL(params, this.url)
+		return new URL(params, this.#url)
 	}
 
 	async getEntry(entryName) {
