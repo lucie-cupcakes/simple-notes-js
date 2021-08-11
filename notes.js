@@ -1,6 +1,10 @@
 import {Program} from "./program.js"
 (async () => {
-  let program = new Program()
-  await program.run()
+  try {
+    let program = new Program()
+    await program.run()
+  } catch (e) {
+    console.error(e)
+  }
 })()
 
